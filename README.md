@@ -38,14 +38,14 @@ LOAD_FULL $MB -- THEN_EXECUTE $TASKS
 
 The core configuration lives in [`.gemini/settings.json`](.gemini/settings.json). This file pre-configures two powerful Model Context Protocol (MCP) servers.
 
-### 1. @upstash/context7-mcp
+### 1. [@upstash/context7-mcp](https://github.com/upstash/context7)
 
 - **Status**: Automatic Installation
 
 - **Action Required**: Add your API Key.
 This server will automatically install via `npx` on systems with NPM available. You simply need to open `settings.json` and replace `KEY_HERE` with your actual API key.
 
-### 2. ast-grep-mcp
+### 2. [ast-grep-mcp](https://github.com/ast-grep/ast-grep-mcp)
 
 - **Status**: Manual Installation Required
 
