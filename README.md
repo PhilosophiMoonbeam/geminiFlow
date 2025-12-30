@@ -25,11 +25,11 @@
 ## 🧑‍💻 Common Prompts
 
 ```bash
-LOAD_FULL $MB -- CREATE_NEW $TASKS: Example Feature Request
+LOAD_FULL $MB -- THEN_CREATE $TASKS: Example Feature Request
 ```
 
 ```bash
-LOAD_FULL $MB -- EXECUTE_OPEN $TASKS
+LOAD_FULL $MB -- THEN_EXECUTE $TASKS
 ```
 
 ---
