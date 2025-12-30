@@ -25,6 +25,10 @@
 ## 🧑‍💻 Common Prompts
 
 ```bash
+INIT $MB -- PROJECT: Social Network for Rabbits
+```
+
+```bash
 LOAD_FULL $MB -- THEN_CREATE $TASKS: Example Feature Request
 ```
 
@@ -40,12 +44,16 @@ The core configuration lives in [`.gemini/settings.json`](.gemini/settings.json)
 
 ### 1. [@upstash/context7-mcp](https://github.com/upstash/context7)
 
+Up-to-date lib/dependency documentation for Agents.
+
 - **Status**: Automatic Installation
 
 - **Action Required**: Add your API Key.
 This server will automatically install via `npx` on systems with NPM available. You simply need to open `settings.json` and replace `KEY_HERE` with your actual API key.
 
 ### 2. [ast-grep-mcp](https://github.com/ast-grep/ast-grep-mcp)
+
+Focused structural code search for Agents.
 
 - **Status**: Manual Installation Required
 
