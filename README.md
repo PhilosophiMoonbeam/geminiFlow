@@ -22,6 +22,18 @@
 
 ---
 
+## 🧑‍💻 Common Prompts
+
+```bash
+LOAD_FULL $MB -- CREATE_NEW $TASKS: Example Feature Request
+```
+
+```bash
+LOAD_FULL $MB -- EXECUTE_OPEN $TASKS
+```
+
+---
+
 ## ⚙️ Configuration & MCP Servers
 
 The core configuration lives in [`.gemini/settings.json`](.gemini/settings.json). This file pre-configures two powerful Model Context Protocol (MCP) servers.
