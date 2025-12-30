@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp",
+        "--api-key",
+        "KEY_HERE"
+      ]
+    },
+    "ast-grep": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/home/user/dir/ast-grep-mcp",
+        "run",
+        "main.py"
+      ],
+      "env": {}
+    }
+  }
+}
