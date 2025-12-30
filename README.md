@@ -1,6 +1,8 @@
-# geminiFlow
+<div align="center">
+  <img src="logo.jpg" alt="geminiFlow" width="350">
+</div>
 
-**geminiFlow** is a foundational setup for reliable, agentic Gemini CLI workflows. It provides a structured environment and pre-configured tools to jumpstart your AI-assisted development.
+**geminiFlow** is a foundational setup for reliable, agentic [Gemini CLI](https://geminicli.com/) workflows. It provides a structured environment and pre-configured tools to jumpstart your AI-assisted development.
 
 > [!TIP]
 > **Start Here**: For deep operational details and the core workflow philosophy, please read [GEMINI.md](.gemini/GEMINI.md) first.
@@ -26,13 +28,15 @@ The core configuration lives in [`.gemini/settings.json`](.gemini/settings.json)
 
 ### 1. @upstash/context7-mcp
 
-* **Status**: Automatic Installation
+- **Status**: Automatic Installation
+
 - **Action Required**: Add your API Key.
 This server will automatically install via `npx` on systems with NPM available. You simply need to open `settings.json` and replace `KEY_HERE` with your actual API key.
 
 ### 2. ast-grep-mcp
 
-* **Status**: Manual Installation Required
+- **Status**: Manual Installation Required
+
 - **Action Required**: Install server & update path.
 This server provides structural code search capabilities. You must install it manually on your machine.
 
