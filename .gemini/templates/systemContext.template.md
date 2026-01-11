@@ -27,7 +27,7 @@
 
 * **[Feature]**: [Description]
 
-## 4. Key Design Patterns
+## 3. Key Design Patterns
 
 ### [Category]
 
@@ -37,7 +37,7 @@
 
 * **[Pattern Name]**: [Description]
 
-## 5. Technology Stack
+## 4. Technology Stack
 
 * **Language**: [Language & Version]
 * **Workspace**: [Tool]
