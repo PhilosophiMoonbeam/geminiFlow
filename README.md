@@ -11,125 +11,171 @@
 
 ## 💠 Workflow Diagram
 
+### 1. Data Structure & Boot Sequence
+This diagram focuses on the file system hierarchy, persistent variables (`$MB`, `$TASKS`), and the initialization logic (Step 0).
+
 ```mermaid
 flowchart TD
     %% Styling
+    classDef file fill:#f0fdf4,stroke:#22c55e,stroke-width:2px,color:#000,stroke-dasharray: 5 5
     classDef process fill:#eff6ff,stroke:#3b82f6,stroke-width:2px,color:#000
     classDef decision fill:#fefce8,stroke:#eab308,stroke-width:2px,color:#000
-    classDef artifact fill:#f0fdf4,stroke:#22c55e,stroke-width:2px,color:#000,stroke-dasharray: 5 5
-    classDef stop fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#000
-    classDef phase fill:#f3e8ff,stroke:#a855f7,stroke-width:2px,color:#000
 
-    %% --- ARTIFACTS (Storage) ---
-    subgraph Storage ["💾 File System State"]
+    %% --- STORAGE HIERARCHY ---
+    subgraph Storage ["💾 File System / Variables"]
         direction TB
-        Templates[/"📂 .gemini/templates/*"\]:::artifact
-        MB[("🧠 $MB (Memory Bank)\n- projectBrief.md\n- progress.md\n- systemContext.md")]:::artifact
-        CtxFile[("📄 $CTX\n(activeContext.md)")]:::artifact
-        Tasks[("📋 $TASKS\n- Active Task Files")]:::artifact
+        Tpl[/"📂 .gemini/templates/*"\]:::file
+        MB[("🧠 $MB (Memory Bank)\n- projectBrief.md\n- progress.md\n- systemContext.md")]:::file
+        Ctx[("📄 $CTX\n(activeContext.md)")]:::file
+        Tasks[("📋 $TASKS\n- <task_id>.md")]:::file
     end
 
     %% --- BOOT SEQUENCE ---
     subgraph Boot ["🚀 0. BOOT_SEQUENCE"]
         direction TB
-        Init(1. INIT: Project Setup\nCheck/Mkdir/Cp):::process
-        Load(2. LOAD: Read Context\nRead $MB & $CTX):::process
-        Align(3. ALIGN: Check Task\nRead $TASKS if ref in $CTX):::process
+        Start((Boot))
+        Init{Check $MB?}:::decision
+        Mkdir(Mkdir & Copy Tpl):::process
+        Load(READ $MB + $CTX):::process
+        Align{Ctx refs Task?}:::decision
+        ReadTask(READ $TASKS/<id>):::process
+        Ready([Ready for Loop]):::process
 
-        Templates -.->|Copy if empty| Init
-        Init -->|Populate| MB
-        Init --> Load
-        MB -.->|Read| Load
-        CtxFile -.->|Read| Load
+        Start --> Init
+        Init -->|No| Mkdir
+        Mkdir -->|Populate| MB
+        Init -->|Yes| Load
+        Mkdir --> Load
+        
         Load --> Align
-        Align -->|Sync State| OpStart
+        Align -->|Yes| ReadTask
+        Align -->|No| Ready
+        ReadTask --> Ready
     end
 
-    %% --- OPERATIONAL LOOP ---
-    subgraph Operation ["⚙️ 2. OPERATIONAL LOOP"]
-        direction TB
-        OpStart((Start Loop))
-        Sync(1. SYNC: Check Phase):::process
+    %% Data Relationships
+    Tpl -.-> Mkdir
+    MB -.-> Load
+    Ctx -.-> Load
+    Tasks -.-> ReadTask
+```
+
+---
+
+### 2. The Operational Loop (High Level)
+This diagram abstracts away the specific coding tools to focus on the Agent's decision-making "heartbeat" (Step 2). It determines *what* to do next.
+
+```mermaid
+flowchart TD
+    %% Styling
+    classDef process fill:#eff6ff,stroke:#3b82f6,stroke-width:2px,color:#000
+    classDef decision fill:#fefce8,stroke:#eab308,stroke-width:2px,color:#000
+    classDef stop fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#000
+    classDef subSystem fill:#f3e8ff,stroke:#a855f7,stroke-width:2px,color:#000
+
+    Start((Start Tick)) --> Sync
+    
+    subgraph Loop ["⚙️ 2. OPERATIONAL LOOP"]
+        Sync(1. SYNC: Read $CTX):::process
         Strategy{2. STRATEGY}:::decision
         
-        %% Strategy Outcomes
+        %% Outcomes
         Stop([STOP: Ambiguous/Ask User]):::stop
-        UpdateCtx(Update $CTX Phase):::process
+        FixCtx(Update $CTX Phase):::process
+        RunProtocol[[EXECUTE: Run Task Protocol]]:::subSystem
         Persist(3. PERSIST: Save State):::process
 
         %% Flow
-        OpStart --> Sync
         Sync --> Strategy
         Strategy -->|Ambiguous| Stop
-        Strategy -->|Phase Mismatch| UpdateCtx
-        UpdateCtx --> Sync
+        Strategy -->|Phase Mismatch| FixCtx
+        FixCtx --> Sync
+        Strategy -->|Execute| RunProtocol
         
-        %% --- TASK PROTOCOL (Embedded in Strategy -> Execute) ---
-        subgraph Protocol ["1. TASK_PROTOCOL (State Machine)"]
-            direction TB
-            
-            %% Phase 1: Discovery
-            subgraph P1 [Discovery Phase]
-                direction TB
-                DiscNode(DISCOVERY):::phase
-                Tools1["🛠 map / find_code\n🛠 dump_syntax_tree\n🛠 resolve-library-id"]:::process
-                DiscNode --- Tools1
-            end
-
-            %% Phase 2: Spec
-            subgraph P2 [Spec Phase]
-                direction TB
-                SpecNode(SPEC):::phase
-                Tools2["🛠 query-docs (Patterns)\n📝 Write Plan -> $TASKS"]:::process
-                SpecNode --- Tools2
-            end
-
-            %% Phase 3: Impl
-            subgraph P3 [Implementation Phase]
-                direction TB
-                ImplNode(IMPL):::phase
-                LoopTDD(🔁 LOOP: TDD):::process
-                Tools3["🛠 find_code -> replace\n🛠 write"]:::process
-                ImplNode --> LoopTDD
-                LoopTDD --- Tools3
-            end
-
-            %% Phase 4: Verify
-            subgraph P4 [Verify Phase]
-                direction TB
-                VerNode(VERIFY):::phase
-                TestDec{Pass?}:::decision
-                Debug("🛠 Debug: query-docs\n(Verify Assumptions)"):::process
-                
-                VerNode --> TestDec
-                TestDec -->|No| Debug
-                Debug -->|Fix| ImplNode
-            end
-
-            %% Protocol Transitions
-            Strategy -->|Execute| DiscNode
-            DiscNode --> SpecNode
-            SpecNode --> ImplNode
-            ImplNode --> VerNode
-        end
-
-        TestDec -->|Yes| Persist
+        RunProtocol --> Persist
         Persist -->|Next Tick| Sync
     end
+```
 
-    %% --- DATA FLOWS ---
-    Align -.->|Read| Tasks
-    SpecNode -.->|Update| Tasks
-    SpecNode -.->|Update Ref| CtxFile
-    Persist -.->|Update Focus| CtxFile
-    Persist -.->|Backfill Learnings| MB
-    Persist -.->|Move Completed| Tasks
+---
 
-    %% Classes
-    class Init,Load,Align,Sync,UpdateCtx,Persist,Debug,Tools1,Tools2,Tools3,LoopTDD process
-    class Strategy,TestDec decision
-    class DiscNode,SpecNode,ImplNode,VerNode phase
-    class Templates,MB,CtxFile,Tasks artifact
+### 3. The Task Protocol (Detailed Execution)
+This diagram details the "State Machine" inside the Execution phase (Step 1). It includes the specific tools (`glob`, `find_code`, `query-docs`) and the **Completion Logic**.
+
+```mermaid
+flowchart TD
+    %% Styling
+    classDef phase fill:#f3e8ff,stroke:#a855f7,stroke-width:2px,color:#000
+    classDef tool fill:#e0f2fe,stroke:#0ea5e9,stroke-width:1px,color:#000
+    classDef decision fill:#fefce8,stroke:#eab308,stroke-width:2px,color:#000
+    classDef action fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#000
+
+    Input((Execute)) --> CheckPhase{Check Phase}
+
+    subgraph Protocol ["1. TASK_PROTOCOL"]
+        
+        %% PHASE 1
+        subgraph P1 [Discovery]
+            direction TB
+            DNode(DISCOVERY):::phase
+            DTools["🛠 map / glob\n🛠 find_code\n🛠 resolve-library-id"]:::tool
+            DNode --- DTools
+        end
+
+        %% PHASE 2
+        subgraph P2 [Spec]
+            direction TB
+            SNode(SPEC):::phase
+            STools["🛠 query-docs (Patterns)"]:::tool
+            Plan(📝 Write Plan to $TASKS):::action
+            SNode --- STools
+            STools --> Plan
+        end
+
+        %% PHASE 3
+        subgraph P3 [Impl]
+            direction TB
+            INode(IMPL):::phase
+            ITools["🛠 find_code -> replace\n🛠 write"]:::tool
+            LoopTDD(🔁 TDD Loop):::process
+            INode --- ITools
+            ITools --- LoopTDD
+        end
+
+        %% PHASE 4
+        subgraph P4 [Verify]
+            direction TB
+            VNode(VERIFY):::phase
+            RunTest{Pass Tests?}:::decision
+            Debug("🛠 Debug: query-docs\n(Check Assumptions)"):::tool
+            VNode --> RunTest
+            RunTest -->|No| Debug
+            Debug -.->|Fix| INode
+        end
+
+        %% TRANSITIONS
+        CheckPhase -->|Discovery| DNode
+        CheckPhase -->|Spec| SNode
+        CheckPhase -->|Impl| INode
+        CheckPhase -->|Verify| VNode
+
+        DNode --> SNode
+        Plan --> INode
+        INode --> VNode
+    end
+
+    %% COMPLETION LOGIC
+    subgraph DoneLogic ["🏁 TRANSITION: DONE"]
+        IsDone{Task Complete?}:::decision
+        MoveFile[📂 MV to $TASKS/completed/ \n 🧹 CLEAR $CTX task_id]:::action
+        UpdateMB[📝 Update $MB/progress.md]:::action
+    end
+
+    RunTest -->|Yes| IsDone
+    IsDone -->|No| Exit((Persist))
+    IsDone -->|Yes| MoveFile
+    MoveFile --> UpdateMB
+    UpdateMB --> Exit
 ```
 
 ---
